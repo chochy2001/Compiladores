@@ -32,6 +32,7 @@ simbEsp [_$]
 digito [0-9]
 dieresis [äëïöüÄËÏÖÜ] 
 espacios [ \a\b\f\n\r\t\v\\"]
+
 id {letra}({letra}|{vocalesSA}|{vocalesCA}|{simbEsp}|{dieresis}|{enies})*
 espacio [\t\v\r]
 
@@ -39,24 +40,16 @@ lenteros [0-9]+(_?[0-9]+)*
 
 lflotantes (({lenteros}+\.{lenteros}*|\.{lenteros}+)([eE][+-]?{lenteros}+)?|{lenteros}+[eE][+-]?{lenteros}+)([fF]|[lL])?
 
-cadena "[^"\n]*"|'[^'\n]*'
+cadena \"[^\"\n]*\"|'[^'\n]*'
 
-runas '({letra}|{vocalesCA}|{enies}|{espacios})+'
+runas `({letra}|{vocalesCA}|{enies}|{espacios})`
 
 %%
-<INITIAL>.    { ++column; }
-<INITIAL>\n   { ++line; column = 0; }
-
-<INITIAL>  {id}            {return ID;}
-<INITIAL>  {lenteros}+     {return INTEGER;}
-<INITIAL>  {lflotantes}+   {return FLOAT;}
-<INITIAL>  {cadena}        {return STRING;}
-<INITIAL>  {runas}+        {return RUNE;}
-
-
-<INITIAL>"//".* {
-    // Ignorar comentarios de una línea
-}
+<INITIAL>{id}            {return ID;}
+<INITIAL>{lenteros}+     {return INTEGER;}
+<INITIAL>{lflotantes}+   {return FLOAT;}
+<INITIAL>{cadena}        {return STRING;}
+<INITIAL>{runas}+        {return RUNE;}
 
 <INITIAL>"/*" {
     BEGIN(BLOCK_COMMENT);
@@ -77,19 +70,18 @@ runas '({letra}|{vocalesCA}|{enies}|{espacios})+'
     if(num_errors >= 5) exit(1);
 }
 
+<INITIAL>"//".* {
+    // Ignorar comentarios de una línea
+}
+
 [ \t\r\n]+     {
     // Ignorar espacios en blanco
 }
 
-
-
-"/*"        {in_comment=1;}
-"*/"        {in_comment=0;}
-
-\n          { ++line; column = 0; }
-.           { ++column; }
+<INITIAL>'\n' { ++line; column = 0; }
 
 <INITIAL>. { 
+++column;
     std::cerr << "Error léxico en la línea " << yylineno << ", columna " << column << ": caracter no reconocido '" << yytext << "'\n"; 
     ++num_errors;
     if(num_errors >= 5) exit(1);
